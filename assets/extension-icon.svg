@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3A3C45"/>
+      <stop offset="1" stop-color="#1C1D22"/>
+    </linearGradient>
+    <linearGradient id="note" gradientUnits="userSpaceOnUse" x1="190" y1="150" x2="320" y2="350">
+      <stop offset="0" stop-color="#FF5577"/>
+      <stop offset="1" stop-color="#E5103D"/>
+    </linearGradient>
+    <linearGradient id="arc" gradientUnits="userSpaceOnUse" x1="60" y1="190" x2="450" y2="440">
+      <stop offset="0" stop-color="#8CF24F"/>
+      <stop offset="0.55" stop-color="#4FCB22"/>
+      <stop offset="1" stop-color="#7BE843"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(0 6)">
+    <!-- keycap: skirt, face, rim highlight -->
+    <rect x="136" y="118" width="240" height="250" rx="58" fill="#0E0F12"/>
+    <rect x="136" y="96" width="240" height="248" rx="58" fill="url(#face)"/>
+    <rect x="138" y="98" width="236" height="244" rx="56" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="3"/>
+
+    <!-- crimson eighth note -->
+    <path fill="url(#note)" d="
+      M 254 148 H 276
+      C 316 154 340 182 334 232
+      C 324 206 304 194 276 192
+      V 278
+      A 42 42 0 1 1 254 241
+      Z"/>
+  </g>
+
+  <!-- lime swoosh after limusic's mark: tilted, open to the top right, passing in front of the key -->
+  <path d="M 70 186 A 200 200 0 1 0 452 292" fill="none" stroke="#0E0F12" stroke-opacity="0.22" stroke-width="50" stroke-linecap="round"/>
+  <path d="M 70 186 A 200 200 0 1 0 452 292" fill="none" stroke="url(#arc)" stroke-width="38" stroke-linecap="round"/>
+  <!-- limusic's play triangle, inside the open end, play, pointing out of the open end -->
+  <path d="M 398 206 L 452 234 L 398 262 Z" fill="#7BE843" stroke="#7BE843" stroke-width="16" stroke-linejoin="round"/>
+</svg>
