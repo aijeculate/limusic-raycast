@@ -4,14 +4,21 @@ import { shortcut } from "./shortcuts";
 import { api, formatMs, LimusicError, musicUrl, NOT_RUNNING_MESSAGE, showError } from "./api";
 import type { Player } from "./types";
 
-const BAR_WIDTH = 16;
+/** Number of characters in the progress bar. */
+const BAR_WIDTH = 28;
 /** Artwork edge in pixels. Raise or lower this to resize the cover. */
 const ART_SIZE = 180;
 
-function progressBar(position: number, duration: number | null): string {
+/**
+ * A slim scrubber like `1:31 ━━━━━━━━━●────── 2:09`, wrapped in inline code so
+ * every character is the same width and the line doesn't wobble as it moves.
+ */
+function progressLine(position: number, duration: number | null): string {
   if (!duration || duration <= 0) return "";
-  const filled = Math.round(Math.min(1, position / duration) * BAR_WIDTH);
-  return "█".repeat(filled) + "░".repeat(BAR_WIDTH - filled);
+  const ratio = Math.max(0, Math.min(1, position / duration));
+  const knob = Math.min(BAR_WIDTH - 1, Math.round(ratio * (BAR_WIDTH - 1)));
+  const bar = "━".repeat(knob) + "●" + "─".repeat(BAR_WIDTH - 1 - knob);
+  return "`" + `${formatMs(position)}  ${bar}  ${formatMs(duration)}` + "`";
 }
 
 /**
@@ -91,7 +98,8 @@ export default function Command() {
   } else {
     const art = track.thumbnailUrl ? `![${track.title}](${smallArtwork(track.thumbnailUrl)})\n\n` : "";
     const sub = `${track.artists}${track.album ? ` · *${track.album}*` : ""}`;
-    markdown = `${art}# ${track.title}\n\n${sub}`;
+    const progress = progressLine(player.positionMs, track.durationMs);
+    markdown = `${art}# ${track.title}\n\n${sub}${progress ? `\n\n${progress}` : ""}`;
   }
 
   return (
@@ -101,11 +109,6 @@ export default function Command() {
       metadata={
         player && track ? (
           <Detail.Metadata>
-            <Detail.Metadata.Label
-              title={`${formatMs(player.positionMs)} / ${formatMs(track.durationMs)}`}
-              text={progressBar(player.positionMs, track.durationMs)}
-            />
-            <Detail.Metadata.Separator />
             <Detail.Metadata.TagList title="State">
               <Detail.Metadata.TagList.Item
                 text={player.isPlaying ? "Playing" : "Paused"}
