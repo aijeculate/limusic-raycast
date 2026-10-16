@@ -5,7 +5,8 @@ import { api, formatMs, LimusicError, musicUrl, NOT_RUNNING_MESSAGE, showError }
 import type { Player } from "./types";
 
 const BAR_WIDTH = 16;
-const ART_HEIGHT = 200;
+/** Artwork edge in pixels. Raise or lower this to resize the cover. */
+const ART_SIZE = 180;
 
 function progressBar(position: number, duration: number | null): string {
   if (!duration || duration <= 0) return "";
@@ -13,15 +14,33 @@ function progressBar(position: number, duration: number | null): string {
   return "█".repeat(filled) + "░".repeat(BAR_WIDTH - filled);
 }
 
-// Thumbnail URLs usually carry their own query string, so set the Raycast
-// size hint through URL rather than blindly appending "?raycast-height=".
-function sizedImage(url: string, height: number): string {
+/**
+ * Ask YouTube's image servers for a small cover instead of the full-quality one.
+ * Raycast's `raycast-width`/`raycast-height` hints aren't honoured everywhere,
+ * so the image itself has to be small for it to display small.
+ */
+function smallArtwork(url: string, size = ART_SIZE): string {
+  let out = url;
   try {
     const u = new URL(url);
-    u.searchParams.set("raycast-height", String(height));
-    return u.toString();
+    if (/(googleusercontent|ggpht)\.com$/.test(u.hostname)) {
+      // e.g. .../abc=w544-h544-l90-rj  or  .../abc=s1200  or  .../abc (no size)
+      const sized = `=w${size}-h${size}-l90-rj`;
+      u.pathname = /=[^/]*$/.test(u.pathname) ? u.pathname.replace(/=[^/]*$/, sized) : u.pathname + sized;
+      out = u.toString();
+    } else if (/(^|\.)ytimg\.com$/.test(u.hostname)) {
+      // Video thumbnails are 16:9. /vi/ID/maxresdefault.jpg -> /vi/ID/mqdefault.jpg (320x180)
+      u.pathname = u.pathname.replace(/\/[^/]+\.(jpg|webp)$/, "/mqdefault.jpg");
+      u.search = "";
+      u.searchParams.set("raycast-height", String(size));
+      return u.toString();
+    }
+    const sizedUrl = new URL(out);
+    sizedUrl.searchParams.set("raycast-width", String(size));
+    sizedUrl.searchParams.set("raycast-height", String(size));
+    return sizedUrl.toString();
   } catch {
-    return url + (url.includes("?") ? "&" : "?") + `raycast-height=${height}`;
+    return out;
   }
 }
 
@@ -70,8 +89,9 @@ export default function Command() {
   } else if (!track) {
     markdown = loading ? "" : "## Nothing playing";
   } else {
-    const art = track.thumbnailUrl ? `![](${sizedImage(track.thumbnailUrl, ART_HEIGHT)})\n\n` : "";
-    markdown = `${art}## ${track.title}\n\n${track.artists}${track.album ? ` · ${track.album}` : ""}`;
+    const art = track.thumbnailUrl ? `![${track.title}](${smallArtwork(track.thumbnailUrl)})\n\n` : "";
+    const sub = `${track.artists}${track.album ? ` · *${track.album}*` : ""}`;
+    markdown = `${art}# ${track.title}\n\n${sub}`;
   }
 
   return (
