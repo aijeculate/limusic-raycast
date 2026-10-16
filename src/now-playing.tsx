@@ -1,15 +1,28 @@
-import { Action, ActionPanel, Keyboard, Detail, Icon } from "@raycast/api";
+import { Action, ActionPanel, Color, Keyboard, Detail, Icon } from "@raycast/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { shortcut } from "./shortcuts";
 import { api, formatMs, LimusicError, musicUrl, NOT_RUNNING_MESSAGE, showError } from "./api";
 import type { Player } from "./types";
 
-const BAR_WIDTH = 30;
+const BAR_WIDTH = 16;
+const ART_HEIGHT = 200;
 
 function progressBar(position: number, duration: number | null): string {
   if (!duration || duration <= 0) return "";
   const filled = Math.round(Math.min(1, position / duration) * BAR_WIDTH);
-  return "`" + "█".repeat(filled) + "░".repeat(BAR_WIDTH - filled) + "`";
+  return "█".repeat(filled) + "░".repeat(BAR_WIDTH - filled);
+}
+
+// Thumbnail URLs usually carry their own query string, so set the Raycast
+// size hint through URL rather than blindly appending "?raycast-height=".
+function sizedImage(url: string, height: number): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("raycast-height", String(height));
+    return u.toString();
+  } catch {
+    return url + (url.includes("?") ? "&" : "?") + `raycast-height=${height}`;
+  }
 }
 
 export default function Command() {
@@ -57,11 +70,8 @@ export default function Command() {
   } else if (!track) {
     markdown = loading ? "" : "## Nothing playing";
   } else {
-    const art = track.thumbnailUrl ? `![](${track.thumbnailUrl}?raycast-height=140)\n\n` : "";
-    markdown =
-      `${art}## ${track.title}\n\n${track.artists}${track.album ? ` · ${track.album}` : ""}\n\n` +
-      `${progressBar(player.positionMs, track.durationMs)}\n\n` +
-      `${formatMs(player.positionMs)} / ${formatMs(track.durationMs)}`;
+    const art = track.thumbnailUrl ? `![](${sizedImage(track.thumbnailUrl, ART_HEIGHT)})\n\n` : "";
+    markdown = `${art}## ${track.title}\n\n${track.artists}${track.album ? ` · ${track.album}` : ""}`;
   }
 
   return (
@@ -71,7 +81,17 @@ export default function Command() {
       metadata={
         player && track ? (
           <Detail.Metadata>
-            <Detail.Metadata.Label title="State" text={player.isPlaying ? "Playing" : "Paused"} />
+            <Detail.Metadata.Label
+              title={`${formatMs(player.positionMs)} / ${formatMs(track.durationMs)}`}
+              text={progressBar(player.positionMs, track.durationMs)}
+            />
+            <Detail.Metadata.Separator />
+            <Detail.Metadata.TagList title="State">
+              <Detail.Metadata.TagList.Item
+                text={player.isPlaying ? "Playing" : "Paused"}
+                color={player.isPlaying ? Color.Green : Color.Orange}
+              />
+            </Detail.Metadata.TagList>
             <Detail.Metadata.Label title="Volume" text={`${player.volume}%`} />
             <Detail.Metadata.Label title="Shuffle" text={player.shuffle ? "On" : "Off"} />
             <Detail.Metadata.Label title="Repeat" text={player.repeat} />
