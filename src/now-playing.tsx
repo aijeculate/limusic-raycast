@@ -7,7 +7,7 @@ import type { Player } from "./types";
 /** Number of characters in the progress bar. */
 const BAR_WIDTH = 28;
 /** Artwork edge in pixels. Raise or lower this to resize the cover. */
-const ART_SIZE = 180;
+const ART_SIZE = 220;
 
 /**
  * A slim scrubber like `1:31 ━━━━━━━━━●────── 2:09`, wrapped in inline code so
@@ -109,6 +109,8 @@ export default function Command() {
       metadata={
         player && track ? (
           <Detail.Metadata>
+            {/* Raycast gives the side panel almost no top padding; an empty row pushes "State" down. */}
+            <Detail.Metadata.Label title=" " />
             <Detail.Metadata.TagList title="State">
               <Detail.Metadata.TagList.Item
                 text={player.isPlaying ? "Playing" : "Paused"}
