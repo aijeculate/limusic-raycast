@@ -57,7 +57,7 @@ export default function Command() {
   } else if (!track) {
     markdown = loading ? "" : "## Nothing playing";
   } else {
-    const art = track.thumbnailUrl ? `![](${track.thumbnailUrl}?raycast-height=260)\n\n` : "";
+    const art = track.thumbnailUrl ? `![](${track.thumbnailUrl}?raycast-height=140)\n\n` : "";
     markdown =
       `${art}## ${track.title}\n\n${track.artists}${track.album ? ` · ${track.album}` : ""}\n\n` +
       `${progressBar(player.positionMs, track.durationMs)}\n\n` +
